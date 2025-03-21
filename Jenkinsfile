@@ -6,7 +6,7 @@ def COMMIT_HASH = ''
 def STATUS_1 = ''
 def STATUS_2 = ''
 pipeline {
-    agent { label 'master' }
+    agent { label 'main' }
     parameters{
         // Repository and project names for DockerHub, also select for destroy all EC2, you can code value here or write later in jenkins build parameters
         string(name: 'REPO_DH', defaultValue: 'test_repo', description: 'Name of repo in Dockerhub before /', trim: true)
