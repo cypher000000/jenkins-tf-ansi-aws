@@ -1,0 +1,80 @@
+---
+- name: Configure Build Server
+  hosts: "{{ ec2_instance_ip }}"
+  gather_facts: false
+  become: true
+  tasks:
+  - name: Install required system packages
+    apt:
+      pkg:
+        - apt-transport-https
+        - ca-certificates
+        - software-properties-common
+        - python3-pip
+        - virtualenv
+        - python3-setuptools
+        - curl
+      state: latest
+      update_cache: true
+  - name: Install boto3 and botocore
+    pip:
+      name: 
+        - boto3>=1.26.0
+        - botocore>=1.29.0
+      state: present
+      
+#uncomment task for general debian, but set "gather_facts: true" in beginning of this playbook and full comment task deb822_repository: "for ubuntu 22_04"
+#  - name: Add Docker Module Repository (General Debian)
+#    ansible.builtin.deb822_repository:
+#      name: docker
+#      types: [ deb ]
+#      uris: "https://download.docker.com/linux/{{ ansible_distribution | lower }}"
+#      signed_by: "https://download.docker.com/linux/{{ ansible_distribution | lower }}/gpg"
+#      suites: ["{{ ansible_distribution_release | lower }}"]
+#      components: [stable]
+#      state: present
+#      enabled: yes
+      
+#for ubuntu 22_04
+  - name: Add docker APT repository (Ubuntu 22_04)
+    ansible.builtin.deb822_repository:
+      name: docker
+      types: [ deb ]
+      uris: "https://download.docker.com/linux/ubuntu" 
+      signed_by: "https://download.docker.com/linux/ubuntu/gpg"
+      suites: ["jammy"]
+      components: [stable]
+      state: present
+      enabled: yes
+      
+  - name: Update apt and install docker-ce
+    apt:
+      name: docker-ce
+      state: latest
+      update_cache: true
+  - name: Install Docker Module for Python
+    pip:
+      name: docker
+  - name: Ensure Docker is started
+    service:
+      name: docker
+      state: started
+      enabled: true
+  - name: Copy Dockerfile and context to build server
+    copy:
+      src: files/Dockerfile
+      dest: /tmp/Dockerfile
+      force: true
+  - name: Log into DockerHub
+    community.docker.docker_login:
+      username: "{{ username_dh }}"
+      password: "{{ password_dh }}"
+  - name: Build Docker image
+    community.docker.docker_image_build:
+      name: "{{ repository }}/{{ project }}"
+      tag: "{{ image_tag }}"
+      path: "/tmp/"
+  - name: Push Docker image
+    community.docker.docker_image_push:
+      name: "{{ repository }}/{{ project }}"
+      tag: "{{ image_tag }}"
