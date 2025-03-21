@@ -44,8 +44,8 @@ Create a pipeline in Jenkins that create "build" EC2 instance, then build a dock
 
 2. Fork this github repo, then:
 - Specify your s3 info in both *.s3.tfbackend files,
-- Specify all your variables in both variables.tf, dont forget path to the public_key, created above
-- in Jenkinsfile you could specify variables REPO_DH and PROJ_DH
+- Specify all your variables in both variables.tf, don't forget path to the created public_key
+- in Jenkinsfile you could specify parameters REPO_DH and PROJ_DH
 
 0. How to generate ssh-key:
 ``` bash
@@ -66,10 +66,10 @@ ALSO: You can automate pipeline in Jenkins using pollscm or githook if you move 
       - repository: url https://github.com/YOUR_FORK
     - Branch: */main
     - Script path: Jenkinsfile
-2. Build pipeline with parameters REPO_DH and PROJ_DH for dockerhub repo/project.
+2. Build pipeline with parameters REPO_DH and PROJ_DH for dockerhub repo/project
 3. Wait for the build to complete and check the status code of the last stage in the console output
 4. Check the app by url: ip_prod:8080/demo/Hello but you can do it only from the ip address of the server where jenkins was installed and used
-5. Build again and activate TF_DESTROY parameter in jenkins pipeline, wait while terrafrom destroys both EC2 instances, linked security groups and ssh keys, delete S3 bucket and thats it!
+5. Build again and activate TF_DESTROY parameter in jenkins pipeline, wait while terrafrom destroys both EC2 instances, linked security groups and ssh keys, then delete S3 bucket manually and thats it!
 
 ## Credits for demo artifact app
 @tongueroo for https://github.com/tongueroo/demo-java
