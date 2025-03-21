@@ -1,3 +1,4 @@
+// Global variables
 def PUBLIC_IP_SEC = ''
 def PUBLIC_IP_BUILD = ''
 def PUBLIC_IP_PROD = ''
@@ -7,12 +8,14 @@ def STATUS_2 = ''
 pipeline {
     agent { label 'master' }
     parameters{
-            string(name: 'REPO_DH', defaultValue: 'test_repo', description: 'Name of repo in Dockerhub before /', trim: true)
-            string(name: 'PROJ_DH', defaultValue: 'test_proj', description: 'Name of project in Dockerhub after /', trim: true)
-            booleanParam(name: 'TF_DESTROY', defaultValue: false, description: 'Destroy Terraform build?')
+        // Repository and project names for DockerHub, also select for destroy all EC2, you can code value here or write later in jenkins build parameters
+        string(name: 'REPO_DH', defaultValue: 'test_repo', description: 'Name of repo in Dockerhub before /', trim: true)
+        string(name: 'PROJ_DH', defaultValue: 'test_proj', description: 'Name of project in Dockerhub after /', trim: true)
+        booleanParam(name: 'TF_DESTROY', defaultValue: false, description: 'Destroy Terraform build?')
     }
     stages {
         stage('Checking params') {
+            // Check if the required parameters are provided
             when {
                 beforeAgent true
                 anyOf {
@@ -25,6 +28,7 @@ pipeline {
             }
         }
         stage('Checkout') {
+            // Checkout source code and extract the commit hash for tagging docker image
             steps {
                 checkout scm
                 script {
@@ -35,13 +39,14 @@ pipeline {
             }
         }
         stage('Terraform destroy build') {
+            // Destroy build EC2 instance if TF_DESTROY = true
             when {
                 equals expected: true, actual: params.TF_DESTROY
             }
             steps {
                 dir('build') {
                     withCredentials([aws(accessKeyVariable: 'AWS_ACCESS_KEY_ID', credentialsId: 'test-jenkins-aws', secretKeyVariable: 'AWS_SECRET_ACCESS_KEY')]) {
-//specify yours credentialsId for aws cli
+// !Specify yours credentialsId for aws cli
                         sh 'terraform init -no-color -backend-config=conf_build.s3.tfbackend -input=false'
                         sh 'terraform plan -destroy -no-color -out=tfpland -input=false'
                         sh "terraform show -no-color tfpland"
@@ -51,6 +56,7 @@ pipeline {
             }
         }
         stage('Terraform apply build') {
+            // Apply terraform config to create build EC2
             when {
                 not {
                     equals expected: true, actual: params.TF_DESTROY
@@ -59,7 +65,7 @@ pipeline {
             steps {
                 dir('build') {
                     withCredentials([aws(accessKeyVariable: 'AWS_ACCESS_KEY_ID', credentialsId: 'test-jenkins-aws', secretKeyVariable: 'AWS_SECRET_ACCESS_KEY')]) {
-//specify yours credentialsId for aws cli
+// !Specify yours credentialsId for aws cli
                         sh 'terraform init -no-color -backend-config=conf_build.s3.tfbackend -input=false'
                         sh 'terraform plan -no-color -out=tfplan -input=false'
                         sh "terraform show -no-color tfplan"
@@ -79,6 +85,7 @@ pipeline {
             }
         }
         stage('Ansible Build') {
+            // Start ansible playbook to setup docker, create docker image and push it to the dockerhub
             when {
                 not {
                     equals expected: true, actual: params.TF_DESTROY
@@ -86,10 +93,10 @@ pipeline {
             }
             steps {
                 withCredentials([usernamePassword(credentialsId: 'test-dockerhub', passwordVariable: 'PASS_DH', usernameVariable: 'USER_DH')]) {
-//specify yours credentialsId for Dockerhub
+// !Specify yours credentialsId for Dockerhub
                     ansiblePlaybook(
                         credentialsId: 'test-jenkins-ansible', 
-//specify yours credentialsId for ssh key
+// !Specify yours credentialsId for ssh key
                         disableHostKeyChecking: true, 
                         inventory: "${PUBLIC_IP_BUILD},", 
                         playbook: 'build/build.yml',
@@ -105,13 +112,14 @@ pipeline {
             }
         }
         stage('Terraform destroy prod') {
+            // Destroy prod EC2 instance if TF_DESTROY = true
             when {
                 equals expected: true, actual: params.TF_DESTROY
             }
             steps {
                 dir('prod') {
                     withCredentials([aws(accessKeyVariable: 'AWS_ACCESS_KEY_ID', credentialsId: 'test-jenkins-aws', secretKeyVariable: 'AWS_SECRET_ACCESS_KEY')]) {
-//specify yours credentialsId for aws cli
+// !Specify yours credentialsId for aws cli
                         sh 'terraform init -no-color -backend-config=conf_prod.s3.tfbackend -input=false'
                         sh 'terraform plan -destroy -no-color -out=tfpland -input=false'
                         sh "terraform show -no-color tfpland"
@@ -121,6 +129,7 @@ pipeline {
             }
         }
         stage('Terraform apply Prod') {
+            // Apply terraform config to create prod EC2
             when {
                 not {
                     equals expected: true, actual: params.TF_DESTROY
@@ -129,7 +138,7 @@ pipeline {
             steps {
                 dir('prod') {
                     withCredentials([aws(accessKeyVariable: 'AWS_ACCESS_KEY_ID', credentialsId: 'test-jenkins-aws', secretKeyVariable: 'AWS_SECRET_ACCESS_KEY')]) {
-//specify yours credentialsId for aws cli
+// !Specify yours credentialsId for aws cli
                         sh 'terraform init -no-color -backend-config=conf_prod.s3.tfbackend -input=false'
                         sh 'terraform plan -no-color -out=tfplan -input=false'
                         sh "terraform show -no-color tfplan"
@@ -149,6 +158,7 @@ pipeline {
             }
         }
         stage('Ansible Prod') {
+            // Start ansible playbook to setup docker, and pull docker image from the dockerhub and start docker container
             when {
                 not {
                     equals expected: true, actual: params.TF_DESTROY
@@ -157,7 +167,7 @@ pipeline {
             steps {
                 ansiblePlaybook(
                     credentialsId: 'test-jenkins-ansible',
-//specify yours credentialsId for ssh key
+// !Specify yours credentialsId for ssh key
                     disableHostKeyChecking: true,
                     inventory: "${PUBLIC_IP_PROD},",
                     playbook: 'prod/prod.yml',
@@ -170,6 +180,7 @@ pipeline {
             }
         }
         stage('Test Prod') {
+            // Receive status code from the app and echo it
             when {
                 not {
                     equals expected: true, actual: params.TF_DESTROY
