@@ -34,7 +34,7 @@ Create a pipeline in Jenkins that create "build" EC2 instance, then build a dock
 - Install git, curl, jenkins and jdk, configure jenkins
 - Install jenkins modules for terraform, ansible, git, aws credentials
 - Register on dockerhub and create a repository (if you doesnt have any)
-- Register on AWS and create an account (if you doesnt have any). Make sure that it has all rights to create ec2 instance/security groups/upload ssh key and to work with s3
+- Register on AWS and create an account (if you doesnt have any). Make sure that it has all permissions to create ec2 instance/security groups/upload ssh key and to work with s3
 - Create and configure s3 bucket for storing state (be sure to enable versioning)
 - Add in jenkins-host credentials for aws (AWS Credentials)
 - Add in jenkins-host credentials 'test-dockerhub' for dockerhub (username with password)
