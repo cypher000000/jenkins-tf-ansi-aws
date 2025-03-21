@@ -59,11 +59,11 @@ ALSO: You can automate pipeline in Jenkins using pollscm or githook if you move 
 
 1. Create jenkins pipeline:
 - General:
-  - Github project: url github.com/......
+  - Github project: url github.com/YOUR_FORK
 - Pipeline
   - Pipeline script from SCM
     - SCM: Git
-      - repository: url github.com/......
+      - repository: url github.com/YOUR_FORK
     - Branch: */main
     - Script path: Jenkinsfile
 2. Build pipeline with parameters REPO_DH and PROJ_DH for dockerhub repo/project.
