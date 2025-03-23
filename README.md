@@ -29,7 +29,7 @@ Create a pipeline in Jenkins that create "build" EC2 instance, then build a dock
   
 ## How to make this work
 
-1. On your VM/PC/etc:
+1. On your VM/PC/EC2/etc:
 
 - Install git, curl, jenkins and jdk, configure jenkins
 - Install jenkins modules for terraform, ansible, git, aws credentials
