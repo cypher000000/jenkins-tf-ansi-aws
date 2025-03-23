@@ -36,7 +36,7 @@ variable "ami" {
 
 variable "vpc_id" {
   type        = string
-  default     = "vpc-0bc772e515526bbe3"
+  default     = "vpc-0e1bed4f06a3b463d"
   description = "AWS VPC ID"
 }
 
