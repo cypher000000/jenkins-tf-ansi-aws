@@ -14,6 +14,7 @@
         - virtualenv
         - python3-setuptools
         - curl
+        - fail2ban
       state: latest
       update_cache: true
   - name: Install boto3 and botocore
@@ -22,7 +23,28 @@
         - boto3>=1.26.0
         - botocore>=1.29.0
       state: present
-      
+
+  - name: Create and insert configuration in /etc/fail2ban/jail.local
+    blockinfile:
+      path: /etc/fail2ban/jail.local
+      marker: ""
+      insertafter: EOF
+      create: true
+      mode: u=rw,g=r,o=r
+      block: |
+        [sshd]
+        enabled = true
+        port = ssh
+        logpath = /var/log/auth.log
+        maxretry = 5
+        bantime = 600
+        findtime = 600
+
+  - name: Restart service fail2ban, in all cases
+    service:
+      name: fail2ban
+      state: restarted
+
 #uncomment task for general debian, but set "gather_facts: true" in beginning of this playbook and full comment task deb822_repository: "for ubuntu 22_04"
 #  - name: Add Docker Module Repository (General Debian)
 #    ansible.builtin.deb822_repository:
